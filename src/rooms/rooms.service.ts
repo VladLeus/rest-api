@@ -100,4 +100,8 @@ export class RoomsService {
   getAllRooms(): Room[] {
     return this.rooms.filter((room: Room) => !room.booked);
   }
+
+  getRoomById(id: string): Room | undefined {
+    return this.rooms.find((room: Room) => room.id === id);
+  }
 }

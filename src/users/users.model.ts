@@ -6,7 +6,7 @@ export class User {
     public age: number,
     public email: string,
     public phone: string,
-    public bookings?: Booking[],
+    public bookings: Booking[],
   ) {}
 }
 
