@@ -1,12 +1,12 @@
 import {
   Body,
   Controller,
-  Get,
+  Get, Header,
   HttpException,
   HttpStatus,
   Param,
-  Post,
-} from '@nestjs/common';
+  Post
+} from "@nestjs/common";
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -14,6 +14,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @Header('Content-Type', 'application/json')
   register(
     @Body()
     userData: {
@@ -23,11 +24,11 @@ export class UsersController {
       email: string;
       phone: string;
     },
-  ) {
+  ): { newUserId: string } {
     if (!userData || Object.keys(userData).length === 0) {
       throw new HttpException("Request can't be empty", HttpStatus.BAD_REQUEST);
     }
-    return this.usersService.register(userData);
+    return { newUserId: this.usersService.register(userData) };
   }
 
   @Get(':id')
