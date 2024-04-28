@@ -30,7 +30,7 @@ export class UsersController {
     return this.usersService.getUserBookings(id);
   }
 
-  @Post('new')
+  @Post(':id/book')
   addNewBooking(
     @Body()
     bookingData: {

@@ -116,30 +116,22 @@ export class RoomsService {
   }
 
   bookRoom(id: string): void {
-    const roomCheck: Room = this.getRoomById(id);
+    const room: Room = this.getRoomById(id);
 
-    if (roomCheck.booked) {
+    if (room.booked) {
       throw new ForbiddenException('Room with this id is already booked');
     }
 
-    this.rooms.forEach((room: Room) => {
-      if (room.id === id) {
-        room.booked = true;
-      }
-    });
+    room.booked = true;
   }
 
   unbookRoom(id: string): void {
-    const roomCheck: Room = this.getRoomById(id);
+    const room: Room = this.getRoomById(id);
 
-    if (!roomCheck.booked) {
+    if (!room.booked) {
       throw new ForbiddenException('Room with this id is not booked');
     }
 
-    this.rooms.forEach((room: Room) => {
-      if (room.id === id) {
-        room.booked = false;
-      }
-    });
+    room.booked = false;
   }
 }

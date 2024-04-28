@@ -87,12 +87,8 @@ export class UsersService {
     return user;
   }
 
-  getUserBookings(id: string): Booking[] | null {
+  getUserBookings(id: string): Booking[] {
     const currUser: User = this.getUserById(id);
-
-    if (currUser.bookings.length === 0) {
-      throw new ForbiddenException("User doesn't have any bookings yet.");
-    }
 
     return currUser.bookings;
   }
