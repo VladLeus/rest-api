@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Header,
-  HttpException,
-  HttpStatus,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Booking, User } from './users.model';
 
@@ -16,7 +7,6 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @Header('Content-Type', 'application/json')
   register(
     @Body()
     userData: {
@@ -27,10 +17,7 @@ export class UsersController {
       phone: string;
     },
   ): { newUserId: string } {
-    if (!userData || Object.keys(userData).length === 0) {
-      throw new HttpException("Request can't be empty", HttpStatus.BAD_REQUEST);
-    }
-    return { newUserId: this.usersService.register(userData) };
+    return this.usersService.register(userData);
   }
 
   @Get(':id')
@@ -44,7 +31,6 @@ export class UsersController {
   }
 
   @Post('new')
-  @Header('Content-Type', 'application/json')
   addNewBooking(
     @Body()
     bookingData: {
@@ -53,8 +39,14 @@ export class UsersController {
       userId: string;
     },
   ): { newBookingId: string } {
-    return {
-      newBookingId: this.usersService.addNewBooking(bookingData),
-    };
+    return this.usersService.addNewBooking(bookingData);
+  }
+
+  @Put(':id/cancel/:roomId')
+  cancelBooking(
+    @Param('id') id: string,
+    @Param('roomId') roomId: string,
+  ): { isBookingCanceled: boolean } {
+    return this.usersService.cancelBookings(id, roomId);
   }
 }

@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Room } from './rooms.model';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -101,7 +105,41 @@ export class RoomsService {
     return this.rooms.filter((room: Room) => !room.booked);
   }
 
-  getRoomById(id: string): Room | undefined {
-    return this.rooms.find((room: Room) => room.id === id);
+  getRoomById(id: string): Room {
+    const room: Room = this.rooms.find((room: Room) => room.id === id);
+
+    if (!room) {
+      throw new NotFoundException('Room with id not found');
+    }
+
+    return room;
+  }
+
+  bookRoom(id: string): void {
+    const roomCheck: Room = this.getRoomById(id);
+
+    if (roomCheck.booked) {
+      throw new ForbiddenException('Room with this id is already booked');
+    }
+
+    this.rooms.forEach((room: Room) => {
+      if (room.id === id) {
+        room.booked = true;
+      }
+    });
+  }
+
+  unbookRoom(id: string): void {
+    const roomCheck: Room = this.getRoomById(id);
+
+    if (!roomCheck.booked) {
+      throw new ForbiddenException('Room with this id is not booked');
+    }
+
+    this.rooms.forEach((room: Room) => {
+      if (room.id === id) {
+        room.booked = false;
+      }
+    });
   }
 }

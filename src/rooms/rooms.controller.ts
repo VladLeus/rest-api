@@ -7,7 +7,7 @@ export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
   @Get()
-  getRooms(): Room[] {
+  getAllRooms(): Room[] {
     return this.roomsService.getAllRooms();
   }
 

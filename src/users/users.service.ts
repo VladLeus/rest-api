@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Booking, User } from './users.model';
 import { v4 as uuidv4 } from 'uuid';
 import { RoomsService } from '../rooms/rooms.service';
@@ -6,11 +12,57 @@ import { Room } from '../rooms/rooms.model';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly roomsService: RoomsService) {}
-
   users: User[] = [];
 
-  register(userData): string {
+  constructor(private readonly roomsService: RoomsService) {}
+
+  register(userData: {
+    firstName: string;
+    lastName: string;
+    age: number;
+    email: string;
+    phone: string;
+  }): { newUserId: string } {
+    if (
+      typeof userData !== 'object' ||
+      userData === null ||
+      Array.isArray(userData)
+    ) {
+      throw new HttpException(
+        'Invalid userData format. Expected an object.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const requiredFields: string[] = [
+      'firstName',
+      'lastName',
+      'age',
+      'email',
+      'phone',
+    ];
+    for (const field of requiredFields) {
+      if (!(field in userData)) {
+        throw new HttpException(
+          `Field '${field}' is required.`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
+    if (
+      typeof userData.firstName !== 'string' ||
+      typeof userData.lastName !== 'string' ||
+      typeof userData.age !== 'number' ||
+      typeof userData.email !== 'string' ||
+      typeof userData.phone !== 'string'
+    ) {
+      throw new HttpException(
+        'Invalid data types for fields.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const newUser: User = new User(
       uuidv4(),
       userData.firstName,
@@ -20,24 +72,40 @@ export class UsersService {
       userData.phone,
       [],
     );
-    this.users.push(newUser);
-    return newUser.id;
+    this.users.unshift(newUser);
+
+    return { newUserId: newUser.id };
   }
 
-  getUserById(id: string): User | undefined {
-    return this.users.find((user: User) => user.id === id);
+  getUserById(id: string): User {
+    const user: User = this.users.find((user: User) => user.id === id);
+
+    if (!user) {
+      throw new NotFoundException('User with this id not found');
+    }
+
+    return user;
+  }
+
+  getUserBookings(id: string): Booking[] | null {
+    const currUser: User = this.getUserById(id);
+
+    if (currUser.bookings.length === 0) {
+      throw new ForbiddenException("User doesn't have any bookings yet.");
+    }
+
+    return currUser.bookings;
   }
 
   addNewBooking(bookingData: {
     roomId: string;
     bookingDate: { checkIn: Date; checkOut: Date };
     userId: string;
-  }): string {
+  }): { newBookingId: string } {
     const room: Room = this.roomsService.getRoomById(bookingData.roomId);
+    const user: User = this.getUserById(bookingData.userId);
 
-    if (!room) {
-      throw new NotFoundException('Room not found');
-    }
+    this.roomsService.bookRoom(room.id);
 
     const newBooking: Booking = new Booking(
       uuidv4(),
@@ -45,18 +113,32 @@ export class UsersService {
       bookingData.bookingDate,
     );
 
-    const user: User = this.getUserById(bookingData.userId);
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
     user.bookings.unshift(newBooking);
 
-    return newBooking.id;
+    return { newBookingId: newBooking.id };
   }
 
-  getUserBookings(id: string): Booking[] | null {
-    const currUser: User = this.users.find((user: User) => user.id === id);
-    return currUser.bookings;
+  cancelBookings(id: string, roomId: string): { isBookingCanceled: boolean } {
+    let userBookings: Booking[] = this.getUserBookings(id);
+
+    this.roomsService.unbookRoom(roomId);
+
+    userBookings.forEach((booking: Booking) => {
+      if (booking.roomId === roomId) {
+        userBookings = userBookings.filter(
+          (booking: Booking) => booking.roomId !== roomId,
+        );
+      } else {
+        throw new ForbiddenException("User doesn't have such booking");
+      }
+    });
+
+    this.users.forEach((user: User) => {
+      if (user.id === id) {
+        user.bookings = userBookings;
+      }
+    });
+
+    return { isBookingCanceled: true };
   }
 }
