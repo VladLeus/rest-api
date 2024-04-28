@@ -119,25 +119,17 @@ export class UsersService {
   }
 
   cancelBookings(id: string, roomId: string): { isBookingCanceled: boolean } {
-    let userBookings: Booking[] = this.getUserBookings(id);
+    const user: User = this.getUserById(id);
+
+    if (!user.bookings.map((b: Booking) => b.roomId).includes(roomId)) {
+      throw new ForbiddenException("User doesn't have such booking");
+    }
 
     this.roomsService.unbookRoom(roomId);
 
-    userBookings.forEach((booking: Booking) => {
-      if (booking.roomId === roomId) {
-        userBookings = userBookings.filter(
-          (booking: Booking) => booking.roomId !== roomId,
-        );
-      } else {
-        throw new ForbiddenException("User doesn't have such booking");
-      }
-    });
-
-    this.users.forEach((user: User) => {
-      if (user.id === id) {
-        user.bookings = userBookings;
-      }
-    });
+    user.bookings = user.bookings.filter(
+      (booking: Booking) => booking.roomId !== roomId,
+    );
 
     return { isBookingCanceled: true };
   }
