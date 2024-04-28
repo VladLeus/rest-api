@@ -102,7 +102,7 @@ export class RoomsService {
   ];
 
   getAllRooms(): Room[] {
-    return this.rooms.filter((room: Room) => !room.booked);
+    return this.rooms.filter((room: Room) => !room.isBooked);
   }
 
   getRoomById(id: string): Room {
@@ -118,20 +118,20 @@ export class RoomsService {
   bookRoom(id: string): void {
     const room: Room = this.getRoomById(id);
 
-    if (room.booked) {
+    if (room.isBooked) {
       throw new ForbiddenException('Room with this id is already booked');
     }
 
-    room.booked = true;
+    room.isBooked = true;
   }
 
   unbookRoom(id: string): void {
     const room: Room = this.getRoomById(id);
 
-    if (!room.booked) {
+    if (!room.isBooked) {
       throw new ForbiddenException('Room with this id is not booked');
     }
 
-    room.booked = false;
+    room.isBooked = false;
   }
 }
